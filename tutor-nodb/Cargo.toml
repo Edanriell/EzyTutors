@@ -2,6 +2,7 @@
 name = "tutor-nodb"
 version = "0.1.0"
 edition = "2024"
+default-run = "tutor-service"
 
 [[bin]]
 name = "basic-server"
@@ -10,6 +11,7 @@ name = "basic-server"
 name = "tutor-service"
 
 [dependencies]
+# Actix web framework and run-time
 actix-web = "4.11.0"
 actix-rt = "2.10.0"
 # Data serialization library
