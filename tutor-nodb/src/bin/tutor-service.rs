@@ -30,6 +30,8 @@ async fn main() -> io::Result<()> {
             .app_data(shared_data.clone())
             // Configure routes for the web application.
             .configure(general_routes)
+            // Register the new course_routes group with the application.
+            .configure(course_routes)
     };
 
     // Initialize the Actix web server with the web
