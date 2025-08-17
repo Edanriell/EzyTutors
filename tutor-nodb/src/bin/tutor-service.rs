@@ -4,6 +4,8 @@ use std::sync::Mutex;
 
 #[path = "../handlers.rs"]
 mod handlers;
+#[path = "../models.rs"]
+mod models;
 #[path = "../routes.rs"]
 mod routes;
 #[path = "../state.rs"]
@@ -17,7 +19,9 @@ async fn main() -> io::Result<()> {
     // Initialize the application state.
     let shared_data = web::Data::new(AppState {
         health_check_response: "I'm good. You've already asked me ".to_string(),
-        visit_count: Mutex::new(0)
+        visit_count: Mutex::new(0),
+        // The courses field is initialized with a Mutex-protected empty vector.
+        courses: Mutex::new(vec![])
     });
     // Define the web application.
     let app = move || {
