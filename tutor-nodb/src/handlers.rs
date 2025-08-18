@@ -70,7 +70,6 @@ pub async fn get_courses_for_tutor(
     app_state: web::Data<AppState>,
     params: web::Path<(i32)>
 ) -> HttpResponse {
-    // let tutor_id: i32 = params.0;
     let tutor_id: i32 = params.into_inner();
 
     let filtered_courses = app_state
@@ -92,6 +91,31 @@ pub async fn get_courses_for_tutor(
         // If courses are not found for the
         // tutor, send an error message.
         HttpResponse::Ok().json("No courses found for tutor".to_string())
+    }
+}
+
+pub async fn get_course_detail(
+    app_state: web::Data<AppState>,
+    params: web::Path<(i32, i32)>,
+) -> HttpResponse {
+    let (tutor_id, course_id) = params.into_inner();
+
+    let selected_course = app_state
+        .courses
+        .lock()
+        .unwrap()
+        .clone()
+        .into_iter()
+        // Retrieve the course corresponding to the tutor_id and course_id sent as request parameters.
+        .find(|x| x.tutor_id == tutor_id && x.course_id == Some(
+            course_id))
+        // Convert Option<T> to Result<T,E>. If Option<T> evaluates to Some(val), it returns
+        // Ok(val). If None is found, it returns Err(err).
+        .ok_or("Course not found");
+    if let Ok(course) = selected_course {
+        HttpResponse::Ok().json(course)
+    } else {
+        HttpResponse::Ok().json("Course not found".to_string())
     }
 }
 
@@ -145,6 +169,24 @@ mod tests {
         // Invoke the handler
         let resp = get_courses_for_tutor(app_state, tutor_id).await;
         // Check the response
+        assert_eq!(resp.status(), StatusCode::OK);
+    }
+
+    #[actix_rt::test]
+    async fn get_one_course_success() {
+        // Construct the app state.
+        let app_state: web::Data<AppState> = web::Data::new(AppState {
+            health_check_response: "".to_string(),
+            visit_count: Mutex::new(0),
+            courses: Mutex::new(vec![]),
+        });
+        // Construct an object of type web::Path with two
+        // parameters. This is to simulate a user typing
+        // localhost:3000/courses/1/1 in a web browser.
+        let params: web::Path<(i32, i32)> = web::Path::from((1, 1));
+        // Invoke the handler
+        let resp = get_course_detail(app_state, params).await;
+        // Check the response.
         assert_eq!(resp.status(), StatusCode::OK);
     }
 }

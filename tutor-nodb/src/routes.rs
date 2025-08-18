@@ -13,5 +13,7 @@ pub fn course_routes(cfg: &mut web::ServiceConfig) {
             .route("/", web::post().to(new_course))
             // Add a new route for getting courses for a
             // tutor (represented by the tutor_id variable).
-            .route("/{tutor_id}", web::get().to(get_courses_for_tutor)));
+            .route("/{tutor_id}", web::get().to(get_courses_for_tutor))
+            // Add a new route to get course details.
+            .route("/{tutor_id}/{course_id}", web::get().to(get_course_detail)));
 } 
