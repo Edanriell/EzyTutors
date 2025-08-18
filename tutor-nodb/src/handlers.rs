@@ -1,3 +1,4 @@
+use std::path::Path;
 use super::state::AppState;
 use actix_web::{web, HttpResponse};
 use super::models::Course;
@@ -65,6 +66,35 @@ pub async fn new_course(
     HttpResponse::Ok().json("Added course")
 }
 
+pub async fn get_courses_for_tutor(
+    app_state: web::Data<AppState>,
+    params: web::Path<(i32)>
+) -> HttpResponse {
+    // let tutor_id: i32 = params.0;
+    let tutor_id: i32 = params.into_inner();
+
+    let filtered_courses = app_state
+        .courses
+        .lock()
+        .unwrap()
+        .clone()
+        .into_iter()
+        // Filter for courses corresponding to the
+        // tutor requested by the web client.
+        .filter(|course| course.tutor_id == tutor_id)
+        .collect::<Vec<Course>>();
+
+    // If courses are found for the tutor, return a
+    // success response with the course list.
+    if filtered_courses.len() > 0 {
+        HttpResponse::Ok().json(filtered_courses)
+    } else {
+        // If courses are not found for the
+        // tutor, send an error message.
+        HttpResponse::Ok().json("No courses found for tutor".to_string())
+    }
+}
+
 // The #[cfg(test)] annotation on the tests module tells Rust to
 // compile and run the tests only when the Cargo test command
 // is run, and not for the cargo build or cargo run commands.
@@ -99,6 +129,22 @@ mod tests {
         // state and a simulated request data payload.
         let resp = new_course(course, app_state).await;
         // Verify whether the HTTP status response code (returned from the handler) indicates success.
+        assert_eq!(resp.status(), StatusCode::OK);
+    }
+
+    #[actix_rt::test]
+    async fn get_all_courses_success() {
+        // Construct the app state.
+        let app_state: web::Data<AppState> = web::Data::new(AppState {
+            health_check_response: "".to_string(),
+            visit_count: Mutex::new(0),
+            courses: Mutex::new(vec![]),
+        });
+        // Simulate a request parameter.
+        let tutor_id: web::Path<(i32)> = web::Path::from((1));
+        // Invoke the handler
+        let resp = get_courses_for_tutor(app_state, tutor_id).await;
+        // Check the response
         assert_eq!(resp.status(), StatusCode::OK);
     }
 }
