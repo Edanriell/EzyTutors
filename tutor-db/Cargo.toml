@@ -1,0 +1,25 @@
+[package]
+name = "tutor-db"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+#Actix web framework and run-time
+# Async runtime for Actix
+actix-web = "4.11.0"
+actix-rt = "2.10.0"
+# Environment access
+# Used to load environment variables into memory
+dotenv = "0.15.0"
+# Database access
+# The sqlx crate will be used for asynchronous connections to the Postgres database
+sqlx = {version = "0.8.6", default_features = false, features = ["postgres","runtime-tokio-native-tls", "macros","chrono"]}
+# Data serialization library
+# serde is used for serialization/deserialization.
+serde = { version = "1.0.219", features = ["derive"] }
+# Other utils
+# chrono is used for date-time related functions.
+chrono = {version = "0.4.41", features = ["serde"]}
+# Openssl for build
+# Needed to build the binary
+openssl = { version = "0.10.73", features = ["vendored"] }
