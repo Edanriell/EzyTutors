@@ -1,17 +1,21 @@
+use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
+use sqlx::postgres::PgPool;
 use std::env;
 use std::io;
-use sqlx::postgres::PgPool;
-use chrono::NaiveDateTime;
+use std::sync::Mutex;
 
-// Define the data structure to represent a course.
-#[derive(Debug)]
-pub struct Course {
-    pub course_id: i32,
-    pub tutor_id: i32,
-    pub course_name: String,
-    pub posted_time: Option<NaiveDateTime>,
-}
+#[path = "../iter2/handlers.rs"]
+mod handlers;
+#[path = "../iter2/models.rs"]
+mod models;
+#[path = "../iter2/routes.rs"]
+mod routes;
+#[path = "../iter2/state.rs"]
+mod state;
+
+use routes::*;
+use state::AppState;
 
 // Used to run an asynchronous Actix web server, and to connect to the database using sqlx
 #[actix_rt::main]
@@ -27,28 +31,49 @@ async fn main() -> io::Result<()> {
     // connections efficiently across multiple threads spawned by the Actix Web framework.
     let db_pool = PgPool::connect(&database_url).await.unwrap();
     // Define the query to be executed.
-    let course_rows = sqlx::query!(
-        r#"select course_id, tutor_id, course_name, posted_time from
-        ezy_course where course_id = $1"#,1
-    )
+    // let course_rows = sqlx::query!(
+    //     r#"select course_id, tutor_id, course_name, posted_time from
+    //     ezy_course where course_id = $1"#,1
+    // )
         // Fetch all rows from the table, passing the reference to the database connection pool.
-        .fetch_all(&db_pool)
-        .await
-        .unwrap();
+        // .fetch_all(&db_pool)
+        // .await
+        // .unwrap();
 
-    let mut courses_list = vec![];
+    // let mut courses_list = vec![];
 
-    for course_row in course_rows {
-        courses_list.push(Course {
-            course_id: course_row.course_id,
-            tutor_id: course_row.tutor_id,
-            course_name: course_row.course_name,
-            posted_time: Some(chrono::NaiveDateTime::from(
-                course_row.posted_time.unwrap())),
-        })
-    }
+    // for course_row in course_rows {
+    //     courses_list.push(Course {
+    //         course_id: course_row.course_id,
+    //         tutor_id: course_row.tutor_id,
+    //         course_name: course_row.course_name,
+    //         posted_time: Some(chrono::NaiveDateTime::from(
+    //             course_row.posted_time.unwrap())),
+    //     })
+    // }
 
-    println!("Courses = {:?}", courses_list);
+    // println!("Courses = {:?}", courses_list);
 
-    Ok(())
+    // Ok(())
+
+    // Construct App State
+    let shared_data = web::Data::new(AppState {
+        health_check_response: "I'm good. You've already asked me ".to_string(),
+        visit_count: Mutex::new(0),
+        db: db_pool,
+    });
+
+    //Construct app and configure routes
+    let app = move || {
+        App::new()
+            // Inject the connection pool into the Actix web application instance as a
+            // cross-application dependency. This will be made available to the handler
+            // functions by the Actix Web framework.
+            .app_data(shared_data.clone())
+            .configure(general_routes)
+            .configure(course_routes)
+    };
+
+    // Start HTTP server
+    HttpServer::new(app).bind("127.0.0.1:3000")?.run().await
 }
