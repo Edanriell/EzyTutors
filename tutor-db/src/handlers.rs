@@ -2,12 +2,10 @@ use super::models::Course;
 use super::state::AppState;
 use actix_web::{web, HttpResponse};
 
-pub async fn health_check_handler(app_state: web::Data<AppState>) ->
-HttpResponse {
+pub async fn health_check_handler(app_state: web::Data<AppState>) -> HttpResponse {
     let health_check_response = &app_state.health_check_response;
     let mut visit_count = app_state.visit_count.lock().unwrap();
-    let response = format!("{} {} times", health_check_response,
-                           visit_count);
+    let response = format!("{} {} times", health_check_response, visit_count);
     *visit_count += 1;
     HttpResponse::Ok().json(&response)
     // The code for the health_check_handler function
@@ -17,24 +15,49 @@ HttpResponse {
 }
 
 pub async fn get_courses_for_tutor(
-    _app_state: web::Data<AppState>,
-    _params: web::Path<(i32,)>,
+    app_state: web::Data<AppState>,
+    params: web::Path<(i32,)>,
 ) -> HttpResponse {
-    HttpResponse::Ok().json("success")
+    // web::Path is an extractor that allows you to extract
+    // typed information from the HTTP request’s path.
+    let tuple = params.0;
+    // The data type returned by the web::Path
+    // extractor for the get_courses_for_tutor()
+    // handler function is <(i32),>.
+    let tutor_id: i32 = i32::try_from(tuple.0).unwrap();
+    // Invoke the corresponding database access
+    // method to retrieve the list of courses
+    // for a tutor, passing in the application
+    // state and tutor-id.
+    let courses = get_courses_for_tutor_db(&app_state.db, tutor_id).await;
+    // In the get_course_details() handler function, retrieve
+    // values for these two path parameters from the HTTP
+    // request: tutor-id and course-id.
+    HttpResponse::Ok().json(courses)
 }
 
 pub async fn get_course_details(
-    _app_state: web::Data<AppState>,
-    _params: web::Path<(i32, i32)>,
+    app_state: web::Data<AppState>,
+    params: web::Path<(i32, i32)>,
 ) -> HttpResponse {
-    HttpResponse::Ok().json("success")
+    let tuple = params;
+    let tutor_id: i32 = i32::try_from(tuple.0).unwrap();
+    // In the get_course_details() handler function, retrieve
+    // values for these two path parameters from the HTTP
+    // request: tutor-id and course-id.
+    let course_id: i32 = i32::try_from(tuple.1).unwrap();
+    let course = get_course_details_db(
+        &app_state.db, tutor_id, course_id).await;
+    HttpResponse::Ok().json(course)
 }
 
 pub async fn post_new_course(
-    _new_course: web::Json<Course>,
-    _app_state: web::Data<AppState>,
+    new_course: web::Json<Course>,
+    app_state: web::Data<AppState>,
 ) -> HttpResponse {
-    HttpResponse::Ok().json("success")
+    let course = post_new_course_db(&app_state.db, new_course.into()).await;
+
+    HttpResponse::Ok().json(course)
 }
 
 #[cfg(test)]
