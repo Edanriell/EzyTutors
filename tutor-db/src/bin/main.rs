@@ -5,13 +5,15 @@ use std::env;
 use std::io;
 use std::sync::Mutex;
 
-#[path = "../iter2/handlers.rs"]
+#[path = "../db_access.rs"]
+mod db_access;
+#[path = "../handlers.rs"]
 mod handlers;
-#[path = "../iter2/models.rs"]
+#[path = "../models.rs"]
 mod models;
-#[path = "../iter2/routes.rs"]
+#[path = "../routes.rs"]
 mod routes;
-#[path = "../iter2/state.rs"]
+#[path = "../state.rs"]
 mod state;
 
 use routes::*;
@@ -56,26 +58,29 @@ async fn main() -> io::Result<()> {
 
     // Ok(())
 
-    // Construct App State
+    // Construct AppState. Note that we are storing the connection pool as
+    // part of the application state in the db field.
     let shared_data = web::Data::new(AppState {
         health_check_response: "I'm good. You've already asked me ".to_string(),
         visit_count: Mutex::new(0),
         db: db_pool,
     });
 
-    //Construct app and configure routes
+    // Construct app and configure routes
     let app = move || {
         App::new()
             // Inject the connection pool into the Actix web application instance as a
             // cross-application dependency. This will be made available to the handler
             // functions by the Actix Web framework.
+            // Inject the app state into the application instance.
             .app_data(shared_data.clone())
+            // Configure the routes.
             .configure(general_routes)
             .configure(course_routes)
     };
 
-    // Start HTTP server
+    // Start the Actix web server, load the constructed Actix web application
+    // instance, and bind the server running on localhost to port 3000. The
+    // await keyword indicates the asynchronous nature of the Actix web server.
     HttpServer::new(app).bind("127.0.0.1:3000")?.run().await
 }
-
-// 115
