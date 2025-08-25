@@ -79,8 +79,10 @@ async fn main() -> io::Result<()> {
             .configure(course_routes)
     };
 
+    let hostname_port = env::var("SERVER_HOSTNAME_PORT").expect("SERVER_HOSTNAME_PORT is not set in .env file");
+
     // Start the Actix web server, load the constructed Actix web application
     // instance, and bind the server running on localhost to port 3000. The
     // await keyword indicates the asynchronous nature of the Actix web server.
-    HttpServer::new(app).bind("127.0.0.1:3000")?.run().await
+    HttpServer::new(app).bind(hostname_port).unwrap().run().await
 }
