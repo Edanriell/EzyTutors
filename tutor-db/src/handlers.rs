@@ -1,3 +1,4 @@
+use super::db_access::*;
 use super::models::Course;
 use super::state::AppState;
 use actix_web::{web, HttpResponse};
@@ -24,7 +25,8 @@ pub async fn get_courses_for_tutor(
     // The data type returned by the web::Path
     // extractor for the get_courses_for_tutor()
     // handler function is <(i32),>.
-    let tutor_id: i32 = i32::try_from(tuple.0).unwrap();
+    // let tutor_id: i32 = i32::try_from(tuple.0).unwrap();
+    let tutor_id: i32 = tuple;
     // Invoke the corresponding database access
     // method to retrieve the list of courses
     // for a tutor, passing in the application
@@ -40,14 +42,14 @@ pub async fn get_course_details(
     app_state: web::Data<AppState>,
     params: web::Path<(i32, i32)>,
 ) -> HttpResponse {
-    let tuple = params;
-    let tutor_id: i32 = i32::try_from(tuple.0).unwrap();
+    // let tuple = params;
+    // let tutor_id: i32 = i32::try_from(tuple.0).unwrap();
     // In the get_course_details() handler function, retrieve
     // values for these two path parameters from the HTTP
     // request: tutor-id and course-id.
-    let course_id: i32 = i32::try_from(tuple.1).unwrap();
-    let course = get_course_details_db(
-        &app_state.db, tutor_id, course_id).await;
+    // let course_id: i32 = i32::try_from(tuple.1).unwrap();
+    let (tutor_id, course_id) = (params.0,params.1);
+    let course = get_course_details_db(&app_state.db, tutor_id, course_id).await;
     HttpResponse::Ok().json(course)
 }
 
@@ -114,7 +116,7 @@ mod tests {
             visit_count: Mutex::new(0),
             db: pool,
         });
-        let params: web::Path<(i32, i32)> = web::Path::from((1, 2));
+        let params: web::Path<(i32, i32)> = web::Path::from((1, 1));
         let resp = get_course_details(app_state, params).await;
         assert_eq!(resp.status(), StatusCode::OK);
     }
@@ -130,10 +132,10 @@ mod tests {
             db: pool,
         });
         let new_course_msg = Course {
-            course_id: 1,
+            course_id: 3,
             tutor_id: 1,
-            course_name: "This is the next course".into(),
-            posted_time: Some(NaiveDate::from_ymd(2020, 9, 17).and_hms(14, 01, 11)),
+            course_name: "Third course".into(),
+            posted_time: Some(NaiveDate::from_ymd(2020, 12, 18).and_hms(05, 40, 00)),
         };
         let course_param = web::Json(new_course_msg);
         let resp = post_new_course(course_param, app_state).await;

@@ -13,7 +13,6 @@ pub fn course_routes(cfg: &mut web::ServiceConfig) {
             // A GET request to /courses/{tutor_id} to retrieve all courses for a tutor
             .route("/{tutor_id}", web::get().to(get_courses_for_tutor))
             // A GET request to /courses/{tutor_id}/{course_id} to retrieve the details for a particular course_id
-            .route("/{tutor_id}/{course_id}", web::get().to(
-                get_course_details)),
+            .route("/{tutor_id}/{course_id}", web::get().to(get_course_details)),
     );
 }
