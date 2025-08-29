@@ -21,6 +21,47 @@ pub struct MyErrorResponse {
     error_message: String,
 }
 
+impl EzyTutorError {
+    fn error_response(&self) -> String {
+        match self {
+            EzyTutorError::DBError(msg) => {
+                println!("Database error occurred: {:?}", msg);
+                "Database error".into()
+            }
+            EzyTutorError::ActixError(msg) => {
+                println!("Server error occurred: {:?}", msg);
+                "Internal server error".into()
+            }
+            EzyTutorError::NotFound(msg) => {
+                println!("Not found error occurred: {:?}", msg);
+                msg.into()
+            }
+        }
+    }
+}
+
+impl error::ResponseError for EzyTutorError {
+    // Using this method, we can specify the
+    // HTTP status code that should be sent
+    // as part of the HTTP response message.
+    fn status_code(&self) -> StatusCode {
+        match self {
+            EzyTutorError::DBError(msg) | EzyTutorError::ActixError(msg) => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+            EzyTutorError::NotFound(msg) => StatusCode::NOT_FOUND,
+        }
+    }
+    // This method will be used to
+    // determine the body of the HTML
+    // response in case of error scenarios.
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code()).json(MyErrorResponse {
+            error_message: self.error_response(),
+        })
+    }
+}
+
 // use std::fmt;
 // use std::fs::File;
 // use std::io::Write;
