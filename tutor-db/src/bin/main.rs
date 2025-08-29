@@ -7,6 +7,8 @@ use std::sync::Mutex;
 
 #[path = "../db_access.rs"]
 mod db_access;
+#[path = "../iter4/errors.rs"]
+mod errors;
 #[path = "../handlers.rs"]
 mod handlers;
 #[path = "../models.rs"]
@@ -79,10 +81,36 @@ async fn main() -> io::Result<()> {
             .configure(course_routes)
     };
 
-    let hostname_port = env::var("SERVER_HOSTNAME_PORT").expect("SERVER_HOSTNAME_PORT is not set in .env file");
+    let host_port = env::var("HOST_PORT").expect("HOST:PORT address is not set in .env file");
 
     // Start the Actix web server, load the constructed Actix web application
     // instance, and bind the server running on localhost to port 3000. The
     // await keyword indicates the asynchronous nature of the Actix web server.
-    HttpServer::new(app).bind(hostname_port).unwrap().run().await
+    HttpServer::new(app).bind(&host_port)?.run().await
+}
+
+// The hello handler function can return one of two values:
+// HTTPResponse in the case of a successful computation,
+// or an Actix Error type in the case of failure.
+async fn hello() -> Result<HttpResponse, Error> {
+    // The handler function returns
+    // an HTTPResponse encapsulated
+    // in the Ok() enum variant.
+    // Ok(HttpResponse::Ok().body("Hello there!"));
+    // Try to open a nonexistent file in the handler function. The
+    // ? operator propagates the error to the calling function
+    // (which is the Actix web server itself, in this case).
+    let _ = File::open("fictionalfile.txt")?;
+    // If the file open is successful, return an
+    // HTTP response message with the success
+    // status code and a text message.
+    Ok(HttpResponse::Ok().body("File read successfully"))
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| App::new().route("/hello", web::get().to(hello)))
+        .bind("127.0.0.1:3000")?
+        .run()
+        .await
 }

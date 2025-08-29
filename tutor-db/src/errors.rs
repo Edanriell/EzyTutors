@@ -1,0 +1,53 @@
+use std::fmt;
+use std::fs::File;
+use std::io::Write;
+
+#[derive(Debug)]
+// Define a custom error enum type
+// containing the set of error variants.
+pub enum MyError {
+    ParseError,
+    IOError,
+}
+
+// By convention, error types in
+// Rust implement the Error trait
+// from the Rust standard library.
+impl std::error::Error for MyError {}
+
+// The Rust Error trait requires the implementation of the
+// Debug and Display traits. The Debug trait is auto-derived. The
+// Display trait is implemented here.
+impl fmt::Display for MyError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            MyError::ParseError => write!(f, "Parse Error"),
+            MyError::IOError => write!(f, "IO Error"),
+        }
+    }
+}
+
+fn main() {
+    let result = square("INVALID");
+    // The square function is called, and the result is
+    // evaluated to print out a suitable message.
+    match result {
+        Ok(res) => println!("Result is {:?}",res),
+        Err(e) => println!("Error in parsing: {:?}",e)
+    };
+}
+
+fn square(val: &str) -> Result<i32, MyError> {
+    // The map_err method transforms parsing, file
+    // open, and file write errors into our MyError type,
+    // which is propagated back to the calling function
+    // through the ? operator
+    let num = val.parse::<i32>().map_err(|_| MyError::ParseError)?;
+    let mut f = File::open("fictionalfile.txt").map_err(
+        |_| MyError::IOError)?;
+    let string_to_write = format!("Square of {:?} is {:?}", num, i32::pow(
+        num, 2));
+    f.write_all(string_to_write.as_bytes())
+        .map_err(|_| MyError::IOError)?;
+    Ok(i32::pow(num, 2))
+}
