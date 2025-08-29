@@ -53,17 +53,27 @@ pub async fn get_courses_for_tutor(
 
 pub async fn get_course_details(
     app_state: web::Data<AppState>,
-    params: web::Path<(i32, i32)>,
-) -> HttpResponse {
+    // params: web::Path<(i32, i32)>,
+    path: web::Path<(i32, i32)>
+// ) -> HttpResponse {
+    // Change the handler function signature to return a Result type.
+) -> Result<HttpResponse, EzyTutorError> {
     // let tuple = params;
     // let tutor_id: i32 = i32::try_from(tuple.0).unwrap();
     // In the get_course_details() handler function, retrieve
     // values for these two path parameters from the HTTP
     // request: tutor-id and course-id.
     // let course_id: i32 = i32::try_from(tuple.1).unwrap();
-    let (tutor_id, course_id) = (params.0,params.1);
-    let course = get_course_details_db(&app_state.db, tutor_id, course_id).await;
-    HttpResponse::Ok().json(course)
+    // let (tutor_id, course_id) = (params.0,params.1);
+    // let course = get_course_details_db(&app_state.db, tutor_id, course_id).await;
+    // HttpResponse::Ok().json(course)
+    let (tutor_id, course_id) = path.into_inner();
+    get_course_details_db(&app_state.db, tutor_id, course_id)
+        .await
+        // Invoke the database access function to retrieve
+        // the course details. If it’s successful, return the
+        // course details in the body of the HTTP response.
+        .map(|course| HttpResponse::Ok().json(course))
 }
 
 pub async fn post_new_course(
@@ -133,7 +143,9 @@ mod tests {
             db: pool,
         });
         let params: web::Path<(i32, i32)> = web::Path::from((1, 1));
-        let resp = get_course_details(app_state, params).await;
+        // Note the addition of .unwrap() in the call to the database access
+        // function to extract the HTTP Response from the Result type.
+        let resp = get_course_details(app_state, parameters).await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
     }
 
