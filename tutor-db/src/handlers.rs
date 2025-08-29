@@ -79,10 +79,17 @@ pub async fn get_course_details(
 pub async fn post_new_course(
     new_course: web::Json<Course>,
     app_state: web::Data<AppState>,
-) -> HttpResponse {
-    let course = post_new_course_db(&app_state.db, new_course.into()).await;
-
-    HttpResponse::Ok().json(course)
+// ) -> HttpResponse {
+    // Change the return value of the handler function into a Result type.
+) -> Result<HttpResponse, EzyTutorError> {
+    // let course = post_new_course_db(&app_state.db, new_course.into()).await;
+    // HttpResponse::Ok().json(course)
+    post_new_course_db(&app_state.db, new_course.into())
+        .await
+        // If the call to the database access function is
+        // successful, return the new course details. On failure,
+        // propagate errors to the Actix Web framework.
+        .map(|course| HttpResponse::Ok().json(course))
 }
 
 #[cfg(test)]
@@ -166,7 +173,11 @@ mod tests {
             posted_time: Some(NaiveDate::from_ymd(2020, 12, 18).and_hms(05, 40, 00)),
         };
         let course_param = web::Json(new_course_msg);
-        let resp = post_new_course(course_param, app_state).await;
+        // let resp = post_new_course(course_param, app_state).await;
+        // Add unwrap() on the result value returned by the handler
+        // to extract the HTTP response from the Result type returned
+        // by the post_new_course() database access function.
+        let resp = post_new_course(course_param, app_state).await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
     }
 }

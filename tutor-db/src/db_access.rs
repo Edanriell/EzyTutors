@@ -100,20 +100,41 @@ pub async fn get_course_details_db(
     }
 }
 
-pub async fn post_new_course_db(pool: &PgPool, new_course: Course) -> Course {
+pub async fn post_new_course_db(
+    pool: &PgPool,
+    new_course: Course
+// ) -> Course {
+    // The function returns a Result type, where in a
+    // successful insert into the database returns the new
+    // course details or an error is returned on failure.
+) -> Result<Course, EzyTutorError> {
     let course_row = sqlx::query!(
         "insert into ezy_course (course_id,tutor_id, course_name) values ($1,$2,$3) returning tutor_id, course_id,course_name, posted_time",
         // Prepare the query to insert a new course into the database table.
         new_course.course_id, new_course.tutor_id, new_course.course_name)
         // After inserting, fetch the inserted course.
         .fetch_one(pool)
-        .await.unwrap();
+        // Note the use of ? to convert sqlx errors into
+        // EzyTutorError types and propagate them
+        // back to the calling handler function.
+        .await?;
+        // .await.unwrap();
     // Return a Rust Course data structure from the function.
-    Course {
+    // Course {
+    //     course_id: course_row.course_id,
+    //     tutor_id: course_row.tutor_id,
+    //     course_name: course_row.course_name.clone(),
+    //     posted_time: Some(chrono::NaiveDateTime::from(
+    //         course_row.posted_time.unwrap())),
+    // }
+
+    //Retrieve result
+    Ok(Course {
+        // Return a Result type with Ok(<Course>).
         course_id: course_row.course_id,
         tutor_id: course_row.tutor_id,
         course_name: course_row.course_name.clone(),
         posted_time: Some(chrono::NaiveDateTime::from(
             course_row.posted_time.unwrap())),
-    }
+    })
 }
