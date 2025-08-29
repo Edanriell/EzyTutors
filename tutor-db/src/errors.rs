@@ -46,10 +46,10 @@ impl error::ResponseError for EzyTutorError {
     // as part of the HTTP response message.
     fn status_code(&self) -> StatusCode {
         match self {
-            EzyTutorError::DBError(msg) | EzyTutorError::ActixError(msg) => {
+            EzyTutorError::DBError(_msg) | EzyTutorError::ActixError(_msg) => {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
-            EzyTutorError::NotFound(msg) => StatusCode::NOT_FOUND,
+            EzyTutorError::NotFound(_msg) => StatusCode::NOT_FOUND,
         }
     }
     // This method will be used to

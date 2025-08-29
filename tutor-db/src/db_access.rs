@@ -43,22 +43,20 @@ pub async fn get_courses_for_tutor_db(
             course_id: course_row.course_id,
             tutor_id: course_row.tutor_id,
             course_name: course_row.course_name.clone(),
-            posted_time: Some(chrono::NaiveDateTime::from(
-                course_row.posted_time.unwrap())),
+            posted_time: Some(course_row.posted_time.unwrap()),
         })
         .collect();
     // If there are no query results for the tutor_id, return an error of
     // type EzyTutorError, which will generate a message for the user
     match courses.len() {
-        0 => Err(EzyTutorError::NotFound(
-            "Courses not found for tutor".into(),
-        )),
+        0 => Err(EzyTutorError::NotFound("Courses not found for tutor".into())),
         _ => Ok(courses),
     }
 }
 
 pub async fn get_course_details_db(
-    pool: &PgPool, tutor_id: i32,
+    pool: &PgPool,
+    tutor_id: i32,
     course_id: i32
 // ) -> Course {
     // The function returns a Result type such
@@ -92,8 +90,7 @@ pub async fn get_course_details_db(
             course_id: course_row.course_id,
             tutor_id: course_row.tutor_id,
             course_name: course_row.course_name.clone(),
-            posted_time: Some(chrono::NaiveDateTime::from(
-                course_row.posted_time.unwrap())),
+            posted_time: Some(course_row.posted_time.unwrap()),
         })
     } else {
         Err(EzyTutorError::NotFound("Course id not found".into()))
@@ -109,7 +106,7 @@ pub async fn post_new_course_db(
     // course details or an error is returned on failure.
 ) -> Result<Course, EzyTutorError> {
     let course_row = sqlx::query!(
-        "insert into ezy_course (course_id,tutor_id, course_name) values ($1,$2,$3) returning tutor_id, course_id,course_name, posted_time",
+        "insert into ezy_course (course_id, tutor_id, course_name) values ($1,$2,$3) returning tutor_id, course_id,course_name, posted_time",
         // Prepare the query to insert a new course into the database table.
         new_course.course_id, new_course.tutor_id, new_course.course_name)
         // After inserting, fetch the inserted course.
@@ -134,7 +131,6 @@ pub async fn post_new_course_db(
         course_id: course_row.course_id,
         tutor_id: course_row.tutor_id,
         course_name: course_row.course_name.clone(),
-        posted_time: Some(chrono::NaiveDateTime::from(
-            course_row.posted_time.unwrap())),
+        posted_time: Some(course_row.posted_time.unwrap()),
     })
 }
