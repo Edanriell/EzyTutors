@@ -89,28 +89,28 @@ async fn main() -> io::Result<()> {
     HttpServer::new(app).bind(&host_port)?.run().await
 }
 
-// The hello handler function can return one of two values:
-// HTTPResponse in the case of a successful computation,
-// or an Actix Error type in the case of failure.
-async fn hello() -> Result<HttpResponse, Error> {
-    // The handler function returns
-    // an HTTPResponse encapsulated
-    // in the Ok() enum variant.
-    // Ok(HttpResponse::Ok().body("Hello there!"));
-    // Try to open a nonexistent file in the handler function. The
-    // ? operator propagates the error to the calling function
-    // (which is the Actix web server itself, in this case).
-    let _ = File::open("fictionalfile.txt")?;
-    // If the file open is successful, return an
-    // HTTP response message with the success
-    // status code and a text message.
-    Ok(HttpResponse::Ok().body("File read successfully"))
-}
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().route("/hello", web::get().to(hello)))
-        .bind("127.0.0.1:3000")?
-        .run()
-        .await
-}
+// // The hello handler function can return one of two values:
+// // HTTPResponse in the case of a successful computation,
+// // or an Actix Error type in the case of failure.
+// async fn hello() -> Result<HttpResponse, Error> {
+//     // The handler function returns
+//     // an HTTPResponse encapsulated
+//     // in the Ok() enum variant.
+//     // Ok(HttpResponse::Ok().body("Hello there!"));
+//     // Try to open a nonexistent file in the handler function. The
+//     // ? operator propagates the error to the calling function
+//     // (which is the Actix web server itself, in this case).
+//     let _ = File::open("fictionalfile.txt")?;
+//     // If the file open is successful, return an
+//     // HTTP response message with the success
+//     // status code and a text message.
+//     Ok(HttpResponse::Ok().body("File read successfully"))
+// }
+//
+// #[actix_web::main]
+// async fn main() -> std::io::Result<()> {
+//     HttpServer::new(|| App::new().route("/hello", web::get().to(hello)))
+//         .bind("127.0.0.1:3000")?
+//         .run()
+//         .await
+// }
