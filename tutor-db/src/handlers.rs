@@ -1,6 +1,7 @@
 use super::db_access::*;
 use super::models::Course;
 use super::state::AppState;
+use super::errors::EzyTutorError;
 use actix_web::{web, HttpResponse};
 
 pub async fn health_check_handler(app_state: web::Data<AppState>) -> HttpResponse {
@@ -18,24 +19,36 @@ pub async fn health_check_handler(app_state: web::Data<AppState>) -> HttpRespons
 pub async fn get_courses_for_tutor(
     app_state: web::Data<AppState>,
     params: web::Path<(i32,)>,
-) -> HttpResponse {
+// ) -> HttpResponse {
+    // Change the web handler
+    // method signature to
+    // return a Result type.
+) -> Result<HttpResponse, EzyTutorError> {
     // web::Path is an extractor that allows you to extract
     // typed information from the HTTP request’s path.
-    let tuple = params.0;
+    // let tuple = params.0;
     // The data type returned by the web::Path
     // extractor for the get_courses_for_tutor()
     // handler function is <(i32),>.
     // let tutor_id: i32 = i32::try_from(tuple.0).unwrap();
-    let tutor_id: i32 = tuple;
+    // let tutor_id: i32 = tuple;
     // Invoke the corresponding database access
     // method to retrieve the list of courses
     // for a tutor, passing in the application
     // state and tutor-id.
-    let courses = get_courses_for_tutor_db(&app_state.db, tutor_id).await;
+    // let courses = get_courses_for_tutor_db(&app_state.db, tutor_id).await;
     // In the get_course_details() handler function, retrieve
     // values for these two path parameters from the HTTP
     // request: tutor-id and course-id.
-    HttpResponse::Ok().json(courses)
+    // HttpResponse::Ok().json(courses)
+    let tutor_id = path.into_inner();
+    // The call is made to the database access function. Any error
+    // returned is propagated by the handler function to the Actix Web
+    // framework, which converts it to an HTML response message.
+    get_course_for_tutor_db(&app_state.db, tutor_id)
+        .await
+        // If the database call is successful, the map logic is processed and the list of query results is returned.
+        .map(|course| HttpResponse::Ok().json(courses))
 }
 
 pub async fn get_course_details(
@@ -101,7 +114,10 @@ mod tests {
         let tutor_id: web::Path<(i32,)> = web::Path::from((1,));
         // Invoke the handler function with the application state
         // and HTTP request parameter constructed in the previous steps.
-        let resp = get_courses_for_tutor(app_state, tutor_id).await;
+        // let resp = get_courses_for_tutor(app_state, tutor_id).await;
+        // Note the addition of .unwrap(). A Result type is being returned from
+        // the handler method, but we want an HTTP Response, so we have to “unwrap” the result.
+        let resp = get_courses_for_tutor(app_state, tutor_id).await.unwrap();
         // Verify that the returned HTTP response from the handler function shows the success status code.
         assert_eq!(resp.status(), StatusCode::OK);
     }

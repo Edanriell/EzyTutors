@@ -62,6 +62,28 @@ impl error::ResponseError for EzyTutorError {
     }
 }
 
+
+// This enables us to print the EzyTutorError as a string that can be sent to the user.
+impl fmt::Display for EzyTutorError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "{}", self)
+    }
+}
+
+// This enables Actix Web errors to be converted to EzyTutorError using the question mark (?) operator.
+impl From<actix_web::error::Error> for EzyTutorError {
+    fn from(err: actix_web::error::Error) -> Self {
+        EzyTutorError::ActixError(err.to_string())
+    }
+}
+
+// This enables database errors from sqlx to be converted to EzyTutorError using the question mark (?) operator.
+impl From<SQLxError> for EzyTutorError {
+    fn from(err: SQLxError) -> Self {
+        EzyTutorError::DBError(err.to_string())
+    }
+}
+
 // use std::fmt;
 // use std::fs::File;
 // use std::io::Write;
