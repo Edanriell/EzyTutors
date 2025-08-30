@@ -24,3 +24,4 @@ values(2, 1, 'Second course', '2021-03-18 05:45:00');
 
 /* Grant privileges to specific user */
 grant all privileges on table ezy_course to truuser;
+ 

@@ -4,22 +4,6 @@ use super::state::AppState;
 use super::errors::EzyTutorError;
 use actix_web::{web, HttpResponse};
 
-pub async fn health_check_handler(
-    app_state: web::Data<AppState>
-// ) -> HttpResponse {
-) -> Result<HttpResponse, EzyTutorError> {
-    let health_check_response = &app_state.health_check_response;
-    let mut visit_count = app_state.visit_count.lock().unwrap();
-    let response = format!("{} {} times", health_check_response, visit_count);
-    *visit_count += 1;
-    // HttpResponse::Ok().json(&response)
-    Ok(HttpResponse::Ok().json(&response))
-    // The code for the health_check_handler function
-    // keeps track of how many times the handler is
-    // invoked and records that in the application state
-    // state.rs. It returns the visit count as part of the HTTP response.
-}
-
 pub async fn get_courses_for_tutor(
     app_state: web::Data<AppState>,
     // params: web::Path<(i32,)>,
@@ -60,7 +44,7 @@ pub async fn get_course_details(
     app_state: web::Data<AppState>,
     // params: web::Path<(i32, i32)>,
     path: web::Path<(i32, i32)>
-// ) -> HttpResponse {
+    // ) -> HttpResponse {
     // Change the handler function signature to return a Result type.
 ) -> Result<HttpResponse, EzyTutorError> {
     // let tuple = params;
@@ -84,7 +68,7 @@ pub async fn get_course_details(
 pub async fn post_new_course(
     new_course: web::Json<Course>,
     app_state: web::Data<AppState>,
-// ) -> HttpResponse {
+    // ) -> HttpResponse {
     // Change the return value of the handler function into a Result type.
 ) -> Result<HttpResponse, EzyTutorError> {
     // let course = post_new_course_db(&app_state.db, new_course.into()).await;
