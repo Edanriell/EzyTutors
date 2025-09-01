@@ -1,7 +1,7 @@
-use super::db_access::*;
-use super::models::Course;
-use super::state::AppState;
-use super::errors::EzyTutorError;
+use crate::dbaccess::course::*;
+use crate::errors::EzyTutorError;
+use crate::models::course::{CreateCourse, UpdateCourse};
+use crate::state::AppState;
 use actix_web::{web, HttpResponse};
 
 pub async fn get_courses_for_tutor(
@@ -66,14 +66,14 @@ pub async fn get_course_details(
 }
 
 pub async fn post_new_course(
-    new_course: web::Json<Course>,
+    new_course: web::Json<CreateCourse>,
     app_state: web::Data<AppState>,
     // ) -> HttpResponse {
     // Change the return value of the handler function into a Result type.
 ) -> Result<HttpResponse, EzyTutorError> {
     // let course = post_new_course_db(&app_state.db, new_course.into()).await;
     // HttpResponse::Ok().json(course)
-    post_new_course_db(&app_state.db, new_course.into())
+    post_new_course_db(&app_state.db, new_course.into()?)
         .await
         // If the call to the database access function is
         // successful, return the new course details. On failure,
