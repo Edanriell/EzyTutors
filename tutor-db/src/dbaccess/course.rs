@@ -5,7 +5,7 @@ use sqlx::postgres::PgPool;
 pub async fn get_courses_for_tutor_db(
     pool: &PgPool,
     tutor_id: i32
-// ) -> Vec<Course> {
+    // ) -> Vec<Course> {
     // The function returns a Result<T> type
     // representing two possible outcomes:
     // Vec<Course> in the case of success, or
@@ -23,7 +23,7 @@ pub async fn get_courses_for_tutor_db(
         // the sqlx error to an EzyTutorError and
         // propagates it to the calling web handler function.
         .await?;
-        // .unwrap();
+    // .unwrap();
     // Convert the query results into a Rust vector,
     // which is returned from the function.
     // course_rows
@@ -58,7 +58,7 @@ pub async fn get_course_details_db(
     pool: &PgPool,
     tutor_id: i32,
     course_id: i32
-// ) -> Course {
+    // ) -> Course {
     // The function returns a Result type such
     // that a course is returned from the function
     // on success, and an error of type
@@ -71,7 +71,7 @@ pub async fn get_course_details_db(
         // Execute the query.
         .fetch_one(pool)
         .await;
-        // .unwrap();
+    // .unwrap();
     // Return a Rust Course data structure from the function.
     // Course {
     //     course_id: course_row.course_id,
@@ -100,7 +100,7 @@ pub async fn get_course_details_db(
 pub async fn post_new_course_db(
     pool: &PgPool,
     new_course: Course
-// ) -> Course {
+    // ) -> Course {
     // The function returns a Result type, where in a
     // successful insert into the database returns the new
     // course details or an error is returned on failure.
@@ -115,7 +115,7 @@ pub async fn post_new_course_db(
         // EzyTutorError types and propagate them
         // back to the calling handler function.
         .await?;
-        // .await.unwrap();
+    // .await.unwrap();
     // Return a Rust Course data structure from the function.
     // Course {
     //     course_id: course_row.course_id,
