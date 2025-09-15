@@ -81,12 +81,33 @@ pub async fn post_new_course(
         .map(|course| HttpResponse::Ok().json(course))
 }
 
+pub async fn update_course_details(
+    app_state: web::Data<AppState>,
+    update_course: web::Json<UpdateCourse>,
+    path: web::Path<(i32, i32)>,
+) -> Result<HttpResponse, EzyTutorError> {
+    let (tutor_id, course_id) = path.into_inner();
+    update_course_details_db(&app_state.db, tutor_id, course_id, update_course.into())
+        .await
+        .map(|course| HttpResponse::Ok().json(course))
+}
+
+pub async fn delete_course(
+    app_state: web::Data<AppState>,
+    path: web::Path<(i32, i32)>,
+) -> Result<HttpResponse, EzyTutorError> {
+    let (tutor_id, course_id) = path.into_inner();
+    delete_course_db(&app_state.db, tutor_id, course_id)
+        .await
+        .map(|resp| HttpResponse::Ok().json(resp))
+}
+
 #[cfg(test)]
 mod tests {
     // Module imports
     use super::*;
     use actix_web::http::StatusCode;
-    use chrono::NaiveDate;
+    use actix_web::ResponseError;
     use dotenv::dotenv;
     use sqlx::postgres::PgPool;
     use std::env;
@@ -95,8 +116,10 @@ mod tests {
     #[actix_rt::test]
     async fn get_all_courses_success() {
         dotenv().ok();
-
         // Read database access credentials from the .env file.
+        // Retrieve the DATABASE_URL from the environment
+        // variable.If the variable is not set, the code will panic
+        // with an error message.
         let database_url = env::var("DATABASE_URL").expect(
             "DATABASE_URL is not set in .env file");
         // Create a new connection pool to talk to the Postgres database.
@@ -130,7 +153,7 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn get_course_detail_test() {
+    async fn get_course_detail_success_test() {
         dotenv().ok();
         let database_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
         let pool: PgPool = PgPool::connect(&database_url).await.unwrap();
@@ -140,11 +163,36 @@ mod tests {
             db: pool,
         });
         // let params: web::Path<(i32, i32)> = web::Path::from((1, 1));
+        // Construct path parameters representing tutor_id and course_id.
         let parameters: web::Path<(i32, i32)> = web::Path::from((1, 2));
         // Note the addition of .unwrap() in the call to the database access
         // function to extract the HTTP Response from the Result type.
         let resp = get_course_details(app_state, parameters).await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
+    }
+
+    #[actix_rt::test]
+    async fn get_course_detail_failure_test() {
+        dotenv().ok();
+        let database_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
+        let pool: PgPool = PgPool::connect(&database_url).await.unwrap();
+        let app_state: web::Data<AppState> = web::Data::new(AppState {
+            health_check_response: "".to_string(),
+            visit_count: Mutex::new(0),
+            db: pool,
+        });
+        let parameters: web::Path<(i32, i32)> = web::Path::from((1, 21));
+        // The call to the handler function, which returns a Result<T,E> type.
+        let resp = get_course_details(app_state, parameters).await;
+        // We use the match clause to check if the handler function returns
+        // successfully or returns an Error. In this case, we are trying to retrieve details
+        // for a non-existent course-id, so we’re expecting an error to be returned.
+        match resp {
+            Ok(_) => println!("Something wrong"),
+            // We are asserting that the error status code returned from the handler function
+            // is of type StatusCode::NOT_FOUND.
+            Err(err) => assert_eq!(err.status_code(), StatusCode::NOT_FOUND),
+        }
     }
 
     #[actix_rt::test]
@@ -157,12 +205,20 @@ mod tests {
             visit_count: Mutex::new(0),
             db: pool,
         });
-        let new_course_msg = Course {
-            course_id: 3,
+        // Construct a data structure representing the attributes of the course to be created.
+        let new_course_msg = CreateCourse {
             tutor_id: 1,
             course_name: "Third course".into(),
-            posted_time: Some(NaiveDate::from_ymd(2020, 9, 17).and_hms(14, 01, 11)),
+            course_description: Some("This is a test course".into()),
+            course_format: None,
+            course_level: Some("Beginner".into()),
+            course_price: None,
+            course_duration: None,
+            course_language: Some("English".into()),
+            course_structure: None,
         };
+        // Encapsulate the constructed CreateCourse struct in a
+        // web::Json object to simulate what happens in a client API call.
         let course_param = web::Json(new_course_msg);
         // let resp = post_new_course(course_param, app_state).await;
         // Add unwrap() on the result value returned by the handler
@@ -170,5 +226,79 @@ mod tests {
         // by the post_new_course() database access function.
         let resp = post_new_course(course_param, app_state).await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
+    }
+
+    #[actix_rt::test]
+    async fn update_course_success() {
+        dotenv().ok();
+        let database_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
+        let pool: PgPool = PgPool::connect(&database_url).await.unwrap();
+        let app_state: web::Data<AppState> = web::Data::new(AppState {
+            health_check_response: "".to_string(),
+            visit_count: Mutex::new(0),
+            db: pool,
+        });
+        // Similar to the CreateCourse struct in the previous test
+        // case, we are using the UpdateCourse struct to
+        // provide the data elements to modify the Course record
+        // in the database.
+        let update_course_msg = UpdateCourse {
+            course_name: Some("Course name changed".into()),
+            course_description: Some("This is yet another test course".into()),
+            course_format: None,
+            course_level: Some("Intermediate".into()),
+            course_price: None,
+            course_duration: None,
+            course_language: Some("German".into()),
+            course_structure: None,
+        };
+        // Simulate the URL path parameters to uniquely identify
+        // a course record in the database using tutor_id and course_id.
+        let parameters: web::Path<(i32, i32)> = web::Path::from((1, 3));
+        let update_param = web::Json(update_course_msg);
+        let resp = update_course_details(app_state, update_param, parameters)
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+    }
+
+    #[actix_rt::test]
+    async fn delete_test_success() {
+        dotenv().ok();
+        let database_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
+        let pool: PgPool = PgPool::connect(&database_url).await.unwrap();
+        let app_state: web::Data<AppState> = web::Data::new(AppState {
+            health_check_response: "".to_string(),
+            visit_count: Mutex::new(0),
+            db: pool,
+        });
+        // Ensure that a valid tutor-id and course-id are provided in the URL path
+        // parameters before invoking this test case.
+        let parameters: web::Path<(i32, i32)> = web::Path::from((1, 5));
+        // let parameters: web::Path<(i32, i32)> = web::Path::from((3, 5));
+        let resp = delete_course(app_state, parameters).await.unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+    }
+
+    #[actix_rt::test]
+    async fn delete_test_failure() {
+        dotenv().ok();
+        let database_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
+        let pool: PgPool = PgPool::connect(&database_url).await.unwrap();
+        let app_state: web::Data<AppState> = web::Data::new(AppState {
+            health_check_response: "".to_string(),
+            visit_count: Mutex::new(0),
+            db: pool,
+        });
+        // Provide an invalid course-id or tutor-id in the path parameters.
+        let parameters: web::Path<(i32, i32)> = web::Path::from((1, 21));
+        let resp = delete_course(app_state, parameters).await;
+        match resp {
+            Ok(_) => println!("Something wrong"),
+            // Expect an error to be returned from the handler
+            // function, and compare the error status code
+            // returned by the handler with the expected value.
+            Err(err) => assert_eq!(err.status_code(), StatusCode::NOT_FOUND),
+        }
     }
 }
